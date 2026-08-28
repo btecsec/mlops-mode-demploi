@@ -9,7 +9,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Données volumineuses (versionnées via DVC au chapitre 5, pas via Git)
-data/raw/*.csv
+#data/raw/*.csv
 
 # Modèles entraînés (versionnés via MLflow au chapitre 4)
 models/*.pkl
@@ -20,3 +20,6 @@ models/*.pkl
 # OS
 .DS_Store
 Thumbs.db
+
+# Historique local MLflow
+mlruns/
