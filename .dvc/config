@@ -1,4 +1,7 @@
 [core]
-    remote = localstorage
+    remote = storage
 ['remote "localstorage"']
     url = ../../churn-dvc-storage
+['remote "storage"']
+    url = s3://arn:aws:s3:::churn-dvc-132058/churn
+    region = eu-north-1
