@@ -35,7 +35,7 @@ jobs:
       - name: Lancer les tests
         run: pytest tests/ -v
 
-      # Le .pkl validé par pytest devient un artefact du run.
+      # Le .pkl validé par pytest devient un artefact du run. servira pour le deploy
       - name: Publier le modèle validé
         uses: actions/upload-artifact@v4
         with:
