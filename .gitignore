@@ -23,3 +23,9 @@ Thumbs.db
 
 # Historique local MLflow
 mlruns/
+
+# Base SQLite de tracking MLflow (chapitre 7)
+mlflow.db
+
+# Logs de build
+build.log

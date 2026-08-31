@@ -10,3 +10,9 @@ requires-python = ">=3.10"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated.*:UserWarning",
+    "ignore:Setting the shape on a NumPy array:DeprecationWarning",
+]

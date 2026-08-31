@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Installer les dépendances
+        run: |
+          pip install -r requirements.txt "dvc[s3]"
+          pip install -e .
+
+      # Le CSV n'est pas dans Git (Ch. 5) : il vient du remote DVC.
+      - name: Récupérer les données versionnées
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: dvc pull
+
+      # models/*.pkl est gitignoré (Ch. 1) : le runner refabrique le modèle.
+      - name: Entraîner le modèle attendu par les tests
+        run: python -m churn_predictor.train
+
+      - name: Lancer les tests
+        run: pytest tests/ -v
+
+      # Le .pkl validé par les tests devient un artefact du run.
+      - name: Publier le modèle validé
+        uses: actions/upload-artifact@v4
+        with:
+          name: churn-model
+          path: models/churn_model.pkl
+          retention-days: 5
+          if-no-files-found: error
+
+  build-and-push:
+    needs: test          # garantit aussi que l'artefact existe déjà
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      # Ni Python, ni DVC, ni entraînement : on récupère le .pkl exact
+      # que le job `test` a validé, et c'est lui qui part dans l'image.
+      - name: Récupérer le modèle validé par la CI
+        uses: actions/download-artifact@v4
+        with:
+          name: churn-model
+          path: models/        # reconstitue models/churn_model.pkl
+
+      - name: Connexion au registre GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build et push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest

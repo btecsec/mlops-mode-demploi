@@ -3,5 +3,5 @@
 ['remote "localstorage"']
     url = ../../churn-dvc-storage
 ['remote "storage"']
-    url = s3://arn:aws:s3:::churn-dvc-132058/churn
+    url = s3://churn-dvc-132058/churn
     region = eu-north-1

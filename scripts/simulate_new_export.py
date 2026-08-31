@@ -1,6 +1,10 @@
+from pathlib import Path
+
 import pandas as pd
 
-CSV = "data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv"
+# chemin absolu déduit du fichier : le script marche depuis n'importe quel dossier
+RACINE = Path(__file__).resolve().parents[1]
+CSV = RACINE / "data" / "raw" / "WA_Fn-UseC_-Telco-Customer-Churn.csv"
 df = pd.read_csv(CSV)
 
 # 1. correction : les 11 TotalCharges vides deviennent 0.0 (tenure = 0)
