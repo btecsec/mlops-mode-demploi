@@ -48,6 +48,9 @@ jobs:
     needs: test                      # garantit aussi que l'artefact existe
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write                # sans elle : denied ... Create organization package
     steps:
       - uses: actions/checkout@v4
 
