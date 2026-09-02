@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # Racine du projet, calculée automatiquement — jamais de chemin en dur
@@ -17,7 +18,13 @@ MODEL_PATH = ROOT_DIR / "models" / "churn_model.pkl"
 #   deux dossiers différents (racine du projet, puis src/, par exemple)
 #   écrivent alors dans deux bases distinctes — train.py et register.py
 #   ne se voient plus.
-MLFLOW_TRACKING_URI = f"sqlite:///{(ROOT_DIR / 'mlflow.db').as_posix()}"
+# La ConfigMap (ou un simple export local) prend le dessus ; à défaut, la base
+# SQLite du Chapitre 7 continue de servir sur le poste de développement.
+MLFLOW_TRACKING_URI = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    f"sqlite:///{(ROOT_DIR / 'mlflow.db').as_posix()}",
+)
+
 
 # Colonnes catégorielles du dataset
 CATEGORICAL_COLUMNS = [
