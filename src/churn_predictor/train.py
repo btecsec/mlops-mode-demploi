@@ -24,7 +24,7 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("churn-prediction")
 
 
-def train_and_save(n_estimators: int = 200) -> float:
+def train_and_save(n_estimators: int = 200) -> tuple[str, float]:
     df = load_raw_data()
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
 
@@ -41,7 +41,7 @@ def train_and_save(n_estimators: int = 200) -> float:
         ("model", RandomForestClassifier(n_estimators=n_estimators, random_state=42)),
     ])
 
-    with mlflow.start_run(run_name=f"rf-{n_estimators}-estimators"):
+    with mlflow.start_run(run_name=f"rf-{n_estimators}-estimators") as run:
         pipeline.fit(X_train, y_train)
         accuracy = pipeline.score(X_test, y_test)
 
@@ -51,12 +51,16 @@ def train_and_save(n_estimators: int = 200) -> float:
 
         print(f"Run enregistré — accuracy test : {accuracy:.3f}")
 
+        # L'identifiant du run remonte au DAG (Ch. 11) : c'est lui, et pas
+        # "la version la plus récente du Registry", que la promotion cible.
+        run_id = run.info.run_id
+
     # L'API et l'image Docker du chapitre 3 chargent encore ce fichier local :
     # on continue à le produire, en plus du tracking MLflow ci-dessus.
     MODEL_PATH.parent.mkdir(exist_ok=True)
     joblib.dump(pipeline, MODEL_PATH)
 
-    return accuracy
+    return run_id, accuracy
 
 
 if __name__ == "__main__":

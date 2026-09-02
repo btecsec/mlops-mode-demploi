@@ -20,17 +20,21 @@ from churn_predictor.evaluate import get_champion_accuracy, promote_challenger
 def churn_retrain_pipeline():
 
     @task(retries=2, retry_delay=timedelta(minutes=5))
-    def train_challenger() -> float:
-        """Entraîne un nouveau run MLflow, retourne son accuracy."""
-        return train_and_save()
+    def train_challenger() -> dict:
+        """Entraîne un nouveau run MLflow, retourne son identifiant et son accuracy."""
+        run_id, accuracy = train_and_save()
+        return {"run_id": run_id, "accuracy": accuracy}
 
     @task
-    def evaluate_and_promote(challenger_accuracy: float) -> str:
+    def evaluate_and_promote(challenger: dict) -> str:
         """Compare au champion actuel, promeut seulement si meilleur."""
         current_accuracy = get_champion_accuracy()
+        challenger_accuracy = challenger["accuracy"]
         if challenger_accuracy > current_accuracy:
-            promote_challenger()
-            return f"promu : {challenger_accuracy:.3f} > {current_accuracy:.3f}"
+            # On promeut le run qu'on vient de mesurer, désigné par son
+            # identifiant — pas "le dernier arrivé dans le Registry".
+            version = promote_challenger(challenger["run_id"])
+            return f"promu : version {version}, {challenger_accuracy:.3f} > {current_accuracy:.3f}"
         return f"conservé : challenger {challenger_accuracy:.3f} <= actuel {current_accuracy:.3f}"
 
     evaluate_and_promote(train_challenger())

@@ -17,19 +17,24 @@ def get_champion_accuracy() -> float:
     client = MlflowClient()
     try:
         champion = client.get_model_version_by_alias(MODEL_NAME, "champion")
-    except MlflowException:
+    except MlflowException as exc:
+        # Seul "l'alias n'existe pas" vaut 0.0. Un serveur injoignable ou des
+        # droits refusés lèvent aussi MlflowException : les avaler ferait
+        # promouvoir n'importe quel challenger sur une simple panne réseau.
+        if exc.error_code != "RESOURCE_DOES_NOT_EXIST":
+            raise
         return 0.0  # aucun champion désigné : le premier challenger gagne
     run = client.get_run(champion.run_id)
     return run.data.metrics["accuracy"]
 
 
-def promote_challenger() -> None:
-    """Redéplace l'alias 'champion' sur la version la plus récente."""
-    client = MlflowClient()
-    latest = max(
-        client.search_model_versions(f"name='{MODEL_NAME}'"),
-        key=lambda v: int(v.version),
+def promote_challenger(run_id: str) -> str:
+    """Enregistre le run gagnant dans le Registry et lui donne l'alias 'champion'."""
+    # Le run est passé en paramètre, jamais deviné : promouvoir "la version la
+    # plus élevée" déplacerait l'alias sur un modèle qui n'est pas celui que la
+    # comparaison vient de valider.
+    version = mlflow.register_model(f"runs:/{run_id}/model", MODEL_NAME).version
+    MlflowClient().set_registered_model_alias(
+        name=MODEL_NAME, alias="champion", version=version,
     )
-    client.set_registered_model_alias(
-        name=MODEL_NAME, alias="champion", version=latest.version,
-    )
+    return version
