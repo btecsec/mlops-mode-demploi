@@ -14,7 +14,12 @@ spec:
     spec:
       containers:
         - name: churn-api
-          image: ghcr.io/btecsec/mlops-mode-demploi:latest
+          # Jamais :latest : un tag mutable rend le deploiement irreproductible.
+          # Un Pod replanifie tirerait l'image que :latest designe a cet instant,
+          # et rollout undo n'aurait rien a annuler (le podSpec n'a pas change).
+          # Mise a jour : kubectl set image deployment/churn-api \
+          #                 churn-api=ghcr.io/btecsec/mlops-mode-demploi:<nouveau-sha>
+          image: ghcr.io/btecsec/mlops-mode-demploi:defe7bee86179143098a7681e1169d49fd248ae9
           ports:
             - containerPort: 8000
           envFrom:
