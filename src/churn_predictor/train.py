@@ -24,7 +24,7 @@ mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 mlflow.set_experiment("churn-prediction")
 
 
-def train_and_save(n_estimators: int = 200) -> None:
+def train_and_save(n_estimators: int = 200) -> float:
     df = load_raw_data()
     df["TotalCharges"] = pd.to_numeric(df["TotalCharges"], errors="coerce").fillna(0)
 
@@ -55,6 +55,8 @@ def train_and_save(n_estimators: int = 200) -> None:
     # on continue à le produire, en plus du tracking MLflow ci-dessus.
     MODEL_PATH.parent.mkdir(exist_ok=True)
     joblib.dump(pipeline, MODEL_PATH)
+
+    return accuracy
 
 
 if __name__ == "__main__":

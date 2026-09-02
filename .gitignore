@@ -1,6 +1,7 @@
 # Environnements
 venv/
 .venv/
+.venv-airflow/
 __pycache__/
 *.pyc
 *.egg-info/
