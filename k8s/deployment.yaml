@@ -12,6 +12,12 @@ spec:
       labels:
         app: churn-api
     spec:
+      # Le moindre privilege applique au runtime (voir Ch. 16).
+      securityContext:
+        runAsNonRoot: true          # refuse de demarrer si l'image tourne en root
+        runAsUser: 10001            # l'appuser cree dans le Dockerfile
+        fsGroup: 10001              # sans lui, le volume logs reste root:root
+        seccompProfile: {type: RuntimeDefault}
       containers:
         - name: churn-api
           # Jamais :latest : un tag mutable rend le deploiement irreproductible.
@@ -20,6 +26,10 @@ spec:
           # Mise a jour : kubectl set image deployment/churn-api \
           #                 churn-api=ghcr.io/btecsec/mlops-mode-demploi:<nouveau-sha>
           image: ghcr.io/btecsec/mlops-mode-demploi:defe7bee86179143098a7681e1169d49fd248ae9
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
           ports:
             - containerPort: 8000
           envFrom:
@@ -36,3 +46,11 @@ spec:
           livenessProbe:
             httpGet: {path: /health, port: 8000}
             initialDelaySeconds: 15
+          volumeMounts:
+            # Seuls chemins inscriptibles : le journal des predictions (Ch. 15)
+            # et /tmp, qui sert de HOME. Tout le reste est en lecture seule.
+            - {name: logs, mountPath: /app/logs}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: logs, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}
