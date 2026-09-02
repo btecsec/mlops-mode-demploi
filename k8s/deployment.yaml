@@ -25,7 +25,7 @@ spec:
           # et rollout undo n'aurait rien a annuler (le podSpec n'a pas change).
           # Mise a jour : kubectl set image deployment/churn-api \
           #                 churn-api=ghcr.io/btecsec/mlops-mode-demploi:<nouveau-sha>
-          image: ghcr.io/btecsec/mlops-mode-demploi:defe7bee86179143098a7681e1169d49fd248ae9
+          image: ghcr.io/btecsec/mlops-mode-demploi:2cf5f60f89dc036b33bc3fc9c027ec393ade9c81
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
