@@ -1,0 +1,20 @@
+# Ce dépôt ne porte que le code d'accompagnement du livre.
+#
+# Le manuscrit, le docx, les images et les scripts de fabrication vivent sur
+# le disque mais restent hors de Git : ils ne regardent pas les lecteurs.
+#
+# Tout est donc ignoré par défaut, et seuls les deux dossiers de code sont
+# réadmis. Un chemin ne peut être réadmis que si aucun de ses dossiers
+# parents n'est exclu : d'où le détour par `!/code-complet/` puis
+# `/code-complet/*`, qui rouvre le conteneur sans rouvrir son contenu.
+
+/*
+
+!/.gitignore
+!/README.md
+!/LICENSE
+!/code-solution-chapitre/
+
+!/code-complet/
+/code-complet/*
+!/code-complet/mlops-churn-project/

@@ -1,0 +1,13 @@
+# Configuration non sensible, externalisée hors de l'image Docker : la même
+# image tourne en dev et en prod, seule la ConfigMap change.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: churn-api-config
+data:
+  # Serveur MLflow déployé dans le cluster. Son installation sort du périmètre
+  # du chapitre ; ce qui compte ici, c'est que l'adresse ne soit plus figée
+  # dans l'image (voir os.getenv dans config.py).
+  MLFLOW_TRACKING_URI: "http://mlflow-service:5000"
+  # Alias, jamais un stage "Production" : l'ancienne API MLflow est abandonnée.
+  MODEL_ALIAS: "champion"

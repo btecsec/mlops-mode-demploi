@@ -1,0 +1,5 @@
+# Copier en `terraform.tfvars` (gitignoré) et renseigner votre projet.
+#
+#   cp infra/terraform.tfvars.example infra/terraform.tfvars
+#
+project_id = "<votre-projet-gcp>"

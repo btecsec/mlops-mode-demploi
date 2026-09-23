@@ -1,0 +1,11 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "InvoquerUniquementCetEndpoint",
+      "Effect": "Allow",
+      "Action": ["sagemaker:InvokeEndpoint"],
+      "Resource": "arn:aws:sagemaker:*:*:endpoint/churn-predictor-endpoint"
+    }
+  ]
+}

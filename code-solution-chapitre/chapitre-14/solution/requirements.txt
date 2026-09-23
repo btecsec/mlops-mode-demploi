@@ -1,0 +1,30 @@
+# Figé avec : pip freeze --exclude-editable > requirements.txt
+# --exclude-editable évite d'écrire une ligne `-e file:///C:/...` inutilisable ailleurs.
+numpy==2.3.3
+pandas==2.3.3
+python-dateutil==2.9.0.post0
+pytz==2025.2
+scikit-learn==1.9.0
+scipy==1.16.2
+joblib==1.5.2
+threadpoolctl==3.6.0
+six==1.17.0
+tzdata==2025.2
+pytest==9.1.1
+iniconfig==2.1.0
+packaging==25.0
+pluggy==1.6.0
+Pygments==2.19.2
+fastapi==0.141.1
+uvicorn==0.38.0
+# httpx2 succede a httpx : starlette 1.6 l'importe en premier, et se
+# rabat sur httpx avec un avertissement de depreciation.
+httpx2==2.12.0
+pydantic==2.12.4
+# starlette est transitif : tire par fastapi, et borne a la serie 1.x par
+# prometheus-fastapi-instrumentator a partir du Chapitre 15.
+starlette==1.6.0
+anyio==4.12.0
+mlflow==3.15.2
+dvc[s3]==3.67.1
+PyYAML==6.0.3

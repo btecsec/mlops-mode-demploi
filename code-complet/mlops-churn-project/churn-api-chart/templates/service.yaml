@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-service
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ .Release.Name }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      {{- if eq .Values.service.type "NodePort" }}
+      # Fige plutot que tire au hasard dans la plage 30000-32767 : la regle de
+      # pare-feu Terraform du Chapitre 13 autorise ce port precis, pas un autre.
+      nodePort: {{ .Values.service.nodePort }}
+      {{- end }}

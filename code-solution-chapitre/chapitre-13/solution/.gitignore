@@ -1,0 +1,43 @@
+# Environnements
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Données volumineuses : plus de règle manuelle ici depuis le Chapitre 8.
+# DVC génère lui-même data/raw/.gitignore, ciblé sur le fichier suivi.
+
+# Modèles entraînés (versionnés via MLflow au chapitre 7)
+models/*.pkl
+
+# Secrets et config locale
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Historique local MLflow (Chapitre 7)
+mlflow.db
+mlruns/
+
+# Runtime Airflow (Chapitre 10) : seul airflow/dags/ est du code.
+airflow/*
+!airflow/dags/
+
+# Terraform (Chapitre 13) : le state est la mémoire de l'infra, jamais du code.
+# Commité, il fuite des identifiants et se fait écraser entre deux clones.
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+# Plan enregistré : instantané binaire complet, valeurs de variables
+# comprises. Se relit avec `terraform show tfplan`, ne se commite jamais.
+tfplan
+*.tfplan
+!*.tfvars.example

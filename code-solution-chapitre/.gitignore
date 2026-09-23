@@ -1,0 +1,50 @@
+# Environnements
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Données volumineuses (récupérées via bootstrap.py, jamais commitées — Ch. 4)
+*.csv
+!logs/*.example.csv
+
+# Exception Ch. 8 : DVC n'écrit sa propre règle d'exclusion que s'il voit le CSV
+# non ignoré. On lui rend la main ici, il pose ensuite
+# chapitre-08/solution/data/raw/.gitignore, ciblé sur le seul fichier suivi.
+!chapitre-08/solution/data/raw/*.csv
+
+# Remote DVC local du Chapitre 8 : c'est le "vestiaire", pas du code
+churn-dvc-storage/
+
+# Modèles entraînés (versionnés via MLflow — Ch. 7)
+*.pkl
+
+# Historique local MLflow (Ch. 7)
+mlflow.db
+mlruns/
+
+# Journaux de prédiction et d'audit (Ch. 14 / Ch. 15)
+logs/
+
+# Terraform (Ch. 12)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# Secrets et config locale
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# --- Sauvegardes horodatees ------------------------------------------------
+# Filets poses par les scripts de correction avant chaque ecriture. Git tient
+# lhistorique : ces copies restent sur le disque mais hors du depot.
+*.bak-*

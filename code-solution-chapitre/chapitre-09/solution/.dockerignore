@@ -1,0 +1,17 @@
+.git
+venv/
+.venv/
+__pycache__/
+*.pyc
+notebooks/
+tests/
+data/
+scripts/
+.dvc/
+churn-dvc-storage/
+mlruns/
+mlflow.db
+.idea/
+.env
+.pytest_cache/
+*.egg-info/

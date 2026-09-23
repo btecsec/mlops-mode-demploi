@@ -1,0 +1,30 @@
+# Environnements
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Données volumineuses : plus de règle manuelle ici depuis le Chapitre 8.
+# DVC génère lui-même data/raw/.gitignore, ciblé sur le fichier suivi.
+
+# Modèles entraînés (versionnés via MLflow au chapitre 7)
+models/*.pkl
+
+# Secrets et config locale
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Historique local MLflow (Chapitre 7)
+mlflow.db
+mlruns/
+
+# Runtime Airflow (Chapitre 10) : seul airflow/dags/ est du code.
+airflow/*
+!airflow/dags/

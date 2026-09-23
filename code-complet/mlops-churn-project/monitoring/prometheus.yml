@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "churn-api"
+    static_configs:
+      # host.docker.internal = la machine hôte, vue depuis un container.
+      # "localhost" y désignerait le container Prometheus lui-même.
+      - targets: ["host.docker.internal:8000"]

@@ -1,0 +1,15 @@
+# Dépendances du Chapitre 17 (ouverture LLMOps), séparées du requirements.txt
+# principal : elles n'ont aucun rôle dans le pipeline de churn lui-même.
+#
+#     pip install -r requirements-llm.txt
+#     export OPENROUTER_API_KEY="sk-or-v1-..."
+#
+# La clé d'API vit dans l'environnement, jamais dans le code (Ch. 16).
+#
+# `langchain-openai` sert aussi pour OpenRouter : la passerelle parle le
+# protocole de l'API OpenAI, seule l'adresse du serveur change (explain.py).
+langchain-core
+langchain-openai
+
+# Tracing des appels de LLM, optionnel (dernière étape du TP).
+langsmith

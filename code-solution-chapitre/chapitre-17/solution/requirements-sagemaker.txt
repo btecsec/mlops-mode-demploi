@@ -1,0 +1,9 @@
+# Dépendances du Chapitre 14, séparées du requirements.txt principal : elles
+# pèsent plusieurs centaines de Mo et ne servent qu'au déploiement AWS.
+# Aucun autre chapitre n'en a besoin.
+#
+#     pip install -r requirements-sagemaker.txt
+#
+mlflow[extras]
+boto3
+sagemaker

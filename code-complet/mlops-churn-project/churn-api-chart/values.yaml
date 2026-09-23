@@ -1,0 +1,56 @@
+# Tout ce qui change d'un environnement à l'autre vit ici. Les templates, eux,
+# restent identiques entre dev et prod — c'est l'intérêt du chart.
+image:
+  # Le depot reel du fil rouge, et un tag immuable : jamais :latest, sinon un
+  # Pod replanifie tire une autre image que ses voisins (Ch. 12, Etape 4).
+  repository: ghcr.io/btecsec/mlops-mode-demploi
+  tag: 2cf5f60f89dc036b33bc3fc9c027ec393ade9c81
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8000
+  # Lu uniquement quand `type` vaut NodePort (Ch. 13). A garder aligne avec la
+  # variable `node_port` de Terraform : c'est le port que le pare-feu autorise.
+  nodePort: 30080
+
+config:
+  mlflowTrackingUri: "http://mlflow-service:5000"
+  modelAlias: "champion"
+
+# Le serveur MLflow déployé par le chart. `serviceName` doit correspondre à
+# l'hôte de `config.mlflowTrackingUri` ci-dessus : c'est la même adresse, vue
+# des deux bouts. Changer l'un sans l'autre casse le chargement du modèle.
+mlflow:
+  serviceName: mlflow-service
+  image: ghcr.io/mlflow/mlflow:v3.8.1
+  port: 5000
+  storage: 2Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+# Nom du Secret créé hors du chart (kubectl create secret) : un secret n'a
+# jamais sa place dans un dépôt Git, même chiffré par un template.
+secretName: churn-api-secret
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 6
+  targetCPUUtilizationPercentage: 70

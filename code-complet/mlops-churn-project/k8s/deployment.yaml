@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: churn-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: churn-api
+  template:
+    metadata:
+      labels:
+        app: churn-api
+    spec:
+      # Le moindre privilege applique au runtime (voir Ch. 16).
+      securityContext:
+        runAsNonRoot: true          # refuse de demarrer si l'image tourne en root
+        runAsUser: 10001            # l'appuser cree dans le Dockerfile
+        fsGroup: 10001              # sans lui, le volume logs reste root:root
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: churn-api
+          # Jamais :latest : un tag mutable rend le deploiement irreproductible.
+          # Un Pod replanifie tirerait l'image que :latest designe a cet instant,
+          # et rollout undo n'aurait rien a annuler (le podSpec n'a pas change).
+          # Mise a jour : kubectl set image deployment/churn-api \
+          #                 churn-api=ghcr.io/btecsec/mlops-mode-demploi:<nouveau-sha>
+          image: ghcr.io/btecsec/mlops-mode-demploi:2cf5f60f89dc036b33bc3fc9c027ec393ade9c81
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: churn-api-config
+            - secretRef:
+                name: churn-api-secret
+          resources:
+            requests: {cpu: "100m", memory: "256Mi"}
+            limits: {cpu: "500m", memory: "512Mi"}
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 15
+          volumeMounts:
+            # Seuls chemins inscriptibles : le journal des predictions (Ch. 15)
+            # et /tmp, qui sert de HOME. Tout le reste est en lecture seule.
+            - {name: logs, mountPath: /app/logs}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: logs, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}

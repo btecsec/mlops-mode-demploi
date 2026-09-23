@@ -1,0 +1,24 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: "churn-api"
+    static_configs:
+      # Prometheus tourne dans un container, hors du cluster : le nom DNS
+      # "churn-api-service" (Service du Chapitre 12) n'y est pas résolvable,
+      # et ce Service écoute sur le port 80, pas 8000.
+      # host.docker.internal = la machine hôte vue depuis un container ;
+      # "localhost" y désignerait le container Prometheus lui-même.
+      #
+      # Prérequis, dans un second terminal :
+      #     uvicorn churn_predictor.app:app --host 0.0.0.0 --port 8000
+      #
+      # --host 0.0.0.0 : sans lui uvicorn n'ecoute que sur 127.0.0.1,
+      # injoignable depuis un container sous Linux.
+      #
+      # L'API locale, pas le Pod du Chapitre 12 : son image est antérieure à la
+      # ligne Instrumentator() et répond 404 sur /metrics.
+      #
+      # Une fois Prometheus déployé DANS le cluster, la cible devient
+      # simplement ["churn-api-service:80"].
+      - targets: ["host.docker.internal:8000"]

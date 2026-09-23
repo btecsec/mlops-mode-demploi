@@ -1,0 +1,75 @@
+# Le serveur MLflow fait partie du chart, pas du décor : c'est lui que la
+# ConfigMap désigne par http://mlflow-service:5000. Sans ce fichier, l'API
+# démarre puis échoue au chargement du modèle.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-data
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: {{ .Values.mlflow.storage }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+spec:
+  # Un seul replica tant que le backend est SQLite : deux processus qui
+  # écrivent dans le même fichier le corrompent.
+  replicas: 1
+  # Recreate, et pas RollingUpdate : le volume ReadWriteOnce ne se monte
+  # qu'une fois, le nouveau Pod attendrait indéfiniment que l'ancien le rende.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: {{ .Values.mlflow.image }}
+          command: ["mlflow", "server"]
+          args:
+            - "--host=0.0.0.0"
+            - "--port={{ .Values.mlflow.port }}"
+            # Quatre slashes : trois pour le schéma, le quatrième pour la
+            # racine du chemin absolu. Avec trois, la base atterrit hors du
+            # volume et disparaît au premier redémarrage.
+            - "--backend-store-uri=sqlite:////mlflow/mlflow.db"
+            - "--artifacts-destination=/mlflow/artifacts"
+          ports:
+            - containerPort: {{ .Values.mlflow.port }}
+          volumeMounts:
+            - name: data
+              mountPath: /mlflow
+          resources:
+            {{- toYaml .Values.mlflow.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.mlflow.port }}
+            initialDelaySeconds: 10
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: mlflow-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # Nom fixe, indépendant du nom de la release : il est écrit tel quel dans
+  # MLFLOW_TRACKING_URI et dans les commandes kubectl port-forward.
+  name: {{ .Values.mlflow.serviceName }}
+spec:
+  type: ClusterIP
+  selector:
+    app: mlflow
+  ports:
+    - port: {{ .Values.mlflow.port }}
+      targetPort: {{ .Values.mlflow.port }}

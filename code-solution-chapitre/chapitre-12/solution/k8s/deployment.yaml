@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: churn-api
+spec:
+  replicas: 2                      # état désiré : Kubernetes corrige tout écart
+  selector:
+    matchLabels:
+      app: churn-api
+  template:
+    metadata:
+      labels:
+        app: churn-api
+    spec:
+      containers:
+        - name: churn-api
+          # Tag publié par la CI du Chapitre 10. Remplacez <user> par votre
+          # compte GitHub. Un package GHCR est PRIVÉ par défaut : rendez-le
+          # public, sinon les Pods restent en ImagePullBackOff.
+          # Jamais :latest : un tag mutable rend le deploiement
+          # irreproductible. <sha> = l'empreinte du commit que la CI
+          # du Chapitre 10 a utilisee pour taguer l'image.
+          image: ghcr.io/<user>/churn-api:<sha>
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - configMapRef:
+                name: churn-api-config
+            - secretRef:
+                name: churn-api-secret
+          # requests : la référence dont le HPA a besoin pour calculer un
+          # pourcentage de charge. Sans elle, l'autoscaler reste inerte —
+          # silencieusement. limits : le plafond que le container ne dépasse pas.
+          resources:
+            requests: {cpu: "100m", memory: "256Mi"}
+            limits: {cpu: "500m", memory: "512Mi"}
+          # /health vient du Chapitre 5. readiness : « prêt à recevoir du
+          # trafic » — sans elle, le Service route vers un Pod qui n'a pas fini
+          # de charger le modèle. liveness : « toujours vivant » — sinon un
+          # processus figé reste Running pour l'éternité.
+          readinessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: {path: /health, port: 8000}
+            initialDelaySeconds: 15

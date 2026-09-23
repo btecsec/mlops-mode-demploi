@@ -1,0 +1,19 @@
+# Couche 1 du monitoring : la santé technique. Deux containers, aucune
+# configuration à cliquer.
+#
+#     cd monitoring && docker compose up -d
+#
+services:
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: ["9090:9090"]
+    # Docker Desktop (Windows/macOS) fournit host.docker.internal nativement.
+    # Sous Linux, cette ligne est nécessaire pour que le nom résolve.
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    ports: ["3000:3000"]
+    depends_on: [prometheus]

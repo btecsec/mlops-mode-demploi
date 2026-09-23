@@ -1,0 +1,14 @@
+# Adresse réseau stable devant des Pods qui naissent et meurent. Le Service
+# suit le label `app: churn-api`, pas des IP : c'est ce qui rend l'autoscaling
+# transparent pour les clients.
+apiVersion: v1
+kind: Service
+metadata:
+  name: churn-api-service
+spec:
+  selector:
+    app: churn-api
+  ports:
+    - port: 80          # port exposé par le Service
+      targetPort: 8000  # port écouté par uvicorn dans le container (Ch. 6)
+  type: ClusterIP

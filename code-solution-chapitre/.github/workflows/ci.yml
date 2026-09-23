@@ -1,0 +1,84 @@
+name: CI
+
+# CI de ce dépôt d'accompagnement, à ne pas confondre avec le `ci.yml` que le
+# Chapitre 10 fait écrire dans `chapitre-NN/solution/.github/workflows/`. Celui-là
+# est le sujet du cours, il pousse une image sur GHCR et tire ses données d'un
+# remote DVC : il tourne dans le dépôt du lecteur, pas ici.
+#
+# Celui-ci vérifie ce qui est vérifiable sans compte cloud ni jeu de données :
+# la structure des Dockerfile, la syntaxe des workflows, la validité des
+# manifestes Kubernetes et des charts Helm, et la forme des scripts de
+# déploiement. Le CSV Telco n'est pas dans Git (piège classique du Chapitre 4),
+# donc aucun test qui entraîne un modèle ne peut tourner ici.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  structure:
+    name: Tests structurels des 17 chapitres
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Installer les dépendances des tests structurels
+        run: pip install pytest pyyaml
+
+      - name: Lancer les tests qui ne demandent ni données ni cloud
+        run: |
+          set -e
+          total=0
+          for dossier in chapitre-*/; do
+            chapitre="${dossier%/}"
+            fichiers=""
+            for test in test_dockerfile.py test_workflow_syntax.py \
+                        test_manifests.py test_deploy_script.py; do
+              if [ -f "$chapitre/tests/$test" ]; then
+                fichiers="$fichiers tests/$test"
+              fi
+            done
+            if [ -n "$fichiers" ]; then
+              echo "::group::$chapitre"
+              (cd "$chapitre" && python -m pytest $fichiers -q -p no:warnings)
+              echo "::endgroup::"
+              total=$((total + 1))
+            fi
+          done
+          echo "Chapitres testés : $total"
+
+  arborescence:
+    name: Les 17 dossiers promis par le livre existent
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Le livre renvoie 17 fois vers `chapitre-NN/solution/`. Un dossier
+      # manquant casse un TP sans que rien d'autre ne le signale.
+      - name: Vérifier les quatre fichiers de chaque chapitre
+        run: |
+          set -e
+          manquants=0
+          for n in 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17; do
+            for cible in "chapitre-$n/README.md" "chapitre-$n/exercice.md" \
+                         "chapitre-$n/solution" "chapitre-$n/tests"; do
+              if [ ! -e "$cible" ]; then
+                echo "MANQUE : $cible"
+                manquants=$((manquants + 1))
+              fi
+            done
+          done
+          if [ "$manquants" -gt 0 ]; then
+            echo "$manquants cible(s) manquante(s)"
+            exit 1
+          fi
+          echo "Les 17 chapitres sont complets."

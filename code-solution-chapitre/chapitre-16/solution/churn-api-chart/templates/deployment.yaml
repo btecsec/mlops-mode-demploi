@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  # Sous HPA, on ne fixe pas `replicas` : le champ serait remis à sa valeur
+  # d'origine à chaque `helm upgrade`, annulant le travail de l'autoscaler.
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      # Le moindre privilege applique au runtime (Ch. 16). Les memes reglages
+      # que k8s/deployment.yaml : le chart ne doit pas etre la porte de sortie
+      # par laquelle le durcissement disparait.
+      securityContext:
+        runAsNonRoot: true          # refuse de demarrer si l'image tourne en root
+        runAsUser: 10001            # l'appuser cree dans le Dockerfile
+        fsGroup: 10001              # sans lui, le volume logs reste root:root
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: {{ .Release.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+          ports:
+            - containerPort: {{ .Values.service.targetPort }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
+            - secretRef:
+                name: {{ .Values.secretName }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.service.targetPort }}
+            initialDelaySeconds: 15
+          volumeMounts:
+            # Seuls chemins inscriptibles : le journal des predictions (Ch. 15)
+            # et /tmp, qui sert de HOME. Tout le reste est en lecture seule.
+            - {name: logs, mountPath: /app/logs}
+            - {name: tmp, mountPath: /tmp}
+      volumes:
+        - {name: logs, emptyDir: {}}
+        - {name: tmp, emptyDir: {}}

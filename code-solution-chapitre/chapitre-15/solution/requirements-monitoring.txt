@@ -1,0 +1,12 @@
+# Dépendances de la Couche 2 du Chapitre 15, séparées du requirements.txt
+# principal : Evidently pèse plusieurs centaines de mégaoctets et ne sert qu'à
+# la mesure de drift.
+#
+#     pip install -r requirements-monitoring.txt
+#
+# La version épinglée n'est pas décorative. Evidently a refondu son API en 0.7 :
+# `Report` s'importe depuis `evidently` (plus `evidently.report`), les presets
+# depuis `evidently.presets` (plus `evidently.metric_preset`), et `run()` rend un
+# instantané au lieu de remplir le rapport — `as_dict()` a disparu.
+# check_drift.py cible cette API-là.
+evidently==0.7.21

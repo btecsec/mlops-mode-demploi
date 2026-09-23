@@ -1,0 +1,91 @@
+name: CI
+
+# Le déclencheur le plus important du fichier est `pull_request` : sans lui, la
+# CI ne tourne qu'après le merge sur main — elle constate les dégâts au lieu de
+# les empêcher.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Plancher pour tous les jobs : lecture seule. Un job qui a besoin de plus
+# le redemande explicitement (voir build-and-push).
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"   # la version du venv qui a produit requirements.txt
+
+      - name: Installer les dépendances
+        run: |
+          pip install -r requirements.txt "dvc[s3]"
+          pip install -e .          # sinon : ModuleNotFoundError: No module named 'churn_predictor'
+
+      # Le CSV n'est pas dans Git (Ch. 8) : il vient du remote DVC (R2). Les
+      # identifiants arrivent par des secrets de dépôt, jamais en clair ici.
+      - name: Récupérer les données versionnées
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: dvc pull
+
+      # models/*.pkl est gitignoré (Ch. 4) : le runner démarre sans modèle et
+      # doit le refabriquer, sinon /predict renvoie 500 et test_app.py échoue.
+      - name: Entraîner le modèle attendu par les tests
+        run: python -m churn_predictor.train
+
+      - name: Lancer les tests
+        run: pytest -v
+
+  build-and-push:
+    needs: test                                    # ne démarre que si `test` est vert
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'            # jamais depuis une pull request
+    permissions:
+      contents: read
+      packages: write                              # requis pour pousser sur GHCR
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"   # la version du venv qui a produit requirements.txt
+
+      # Chaque job tourne sur une machine neuve : rien n'est hérité du job
+      # `test`. Sans ce modèle, le `COPY models/` du Dockerfile s'arrête sur
+      # "COPY failed: no source files were specified".
+      - name: Reconstituer le modèle avant le build
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          pip install -r requirements.txt "dvc[s3]"
+          pip install -e .
+          dvc pull
+          python -m churn_predictor.train
+
+      - name: Connexion au registre GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}    # fourni par GitHub à chaque run
+
+      - name: Build et push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          # Deux tags : le SHA, seule référence exacte pour un rollback (Ch. 16),
+          # et `latest`, l'alias que les manifestes Kubernetes iront chercher (Ch. 12).
+          tags: |
+            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository }}:latest

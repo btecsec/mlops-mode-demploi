@@ -1,0 +1,9 @@
+apiVersion: v2
+name: churn-api
+description: API de prédiction du churn client — projet fil rouge MLOps, Mode d'Emploi
+type: application
+# version : celle du chart lui-même. appVersion : celle de l'application
+# empaquetée. Les deux bougent indépendamment — confondre les deux est la
+# première source de confusion sur un chart maintenu à plusieurs.
+version: 0.1.0
+appVersion: "0.1"

@@ -1,0 +1,16 @@
+# Dépendances du Chapitre 11, volontairement séparées de requirements.txt.
+#
+# Airflow ne tourne pas nativement sous Windows : l'installation passe, mais le
+# lancement s'arrête sur `AttributeError: module 'os' has no attribute
+# 'register_at_fork'` — pas de fork() sous Windows. Le mettre dans
+# requirements.txt casserait l'installation de tous les autres chapitres pour
+# les lecteurs sous Windows. Ici, c'est un fichier qu'on n'installe que dans
+# WSL2 ou dans l'image Docker officielle, avec le fichier de contraintes
+# officiel (un par version de Python) :
+#
+#     pip install -r requirements-airflow.txt \
+#       --constraint "https://raw.githubusercontent.com/apache/airflow/constraints-3.3.1/constraints-3.12.txt"
+#
+# Version figée : Airflow tire des dizaines de dépendances, une plage large
+# n'est reproductible nulle part.
+apache-airflow==3.3.1

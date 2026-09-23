@@ -1,0 +1,26 @@
+# Environnements
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Données volumineuses (versionnées via DVC au chapitre 8, pas via Git)
+data/raw/*.csv
+
+# Modèles entraînés (versionnés via MLflow au chapitre 7)
+models/*.pkl
+
+# Secrets et config locale
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Historique local MLflow (Chapitre 7)
+mlflow.db
+mlruns/

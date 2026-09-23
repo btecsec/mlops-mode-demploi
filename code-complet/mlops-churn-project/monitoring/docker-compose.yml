@@ -1,0 +1,12 @@
+services:
+  prometheus:
+    image: prom/prometheus:v3.14.0
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports: ["9090:9090"]
+    # Docker Desktop fournit host.docker.internal ; Linux, non.
+    extra_hosts: ["host.docker.internal:host-gateway"]
+
+  grafana:
+    image: grafana/grafana:13.2.1
+    ports: ["3000:3000"]
